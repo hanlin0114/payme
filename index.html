@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8">
+    <title>Pay Me！！！</title>
+    <meta name="viewport" content="width=device-width">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+      body {
+        height: 100vh;
+        overflow: hidden;
+        background-color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      h1 {
+        color: green;
+        font-family: 'Share Tech Mono', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace;
+        font-size: 6rem;
+        width: 100vw;
+        text-align: center;
+        filter: drop-shadow(0px 0px 5px currentColor);
+      }
+
+      .grid-container {
+        --grid: 10rem;
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-style: preserve-3d;
+        perspective: 100rem;
+        animation: rotate 100s linear infinite forwards;
+        
+        .plane {
+          --dir: 1;
+          width: 300%;
+          height: 150%;
+          min-height: 70rem;
+          position: absolute;
+          bottom: 0;
+          transform-style: preserve-3d;
+          transform-origin: bottom center;
+          transform: translateX(-50%) rotateX(85deg);
+          
+          &:last-child {
+            --dir: -1;
+            top: 0;
+            transform-origin: top center;
+            transform: translateX(-50%) rotateX(-85deg);
+            
+            & > * {
+              &::after {
+                background-image: linear-gradient(to top, rgba(0, 0, 0, 255) var(--grid), rgba(0, 0, 0, 0));
+              }
+            }
+          }
+          
+          & > * {
+            transform-style: preserve-3d;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            
+            &::before, &::after {
+              content: '';
+              display: block;
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              top: 0;
+              left: 0;
+            }
+
+            &::before {
+              background-image: repeating-linear-gradient(to left, green, green 4px, transparent 4px, transparent var(--grid)), 
+                repeating-linear-gradient(to bottom, green, green 4px, transparent 4px, transparent var(--grid));
+              animation: move 1s linear infinite forwards;
+            }
+
+            &::after {
+              background-image: linear-gradient(to bottom, rgba(0, 0, 0, 255) var(--grid), rgba(0, 0, 0, 0));
+              z-index: 1;
+              transform: translateZ(1px);
+            }
+          }
+          
+          .glow {
+            filter: blur(1rem);
+            z-index: 1;
+            mix-blend-mode: plus-lighter;
+          }
+        }
+      }
+
+      @keyframes move {
+        from {
+          transform: translateY(0px);
+        }
+        
+        to {
+          transform: translateY(calc(var(--grid) * var(--dir)));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid-container">
+      <div class="plane">
+        <div class="grid"></div>
+        <div class="glow"></div>
+      </div>
+      <div class="plane">
+        <div class="grid"></div>
+        <div class="glow"></div>
+      </div>
+    </div>
+
+    <h1>距离发工资还有<br /><span id="date"></span></h1>
+    
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
+  <script>
+    dayjs.locale('zh-cn')
+
+    function shouldIWorking(time) {
+      const hour = time.hour()
+      return [10, 11, 14, 15, 16, 17, 20, 21, 22].includes(hour)
+    }
+
+    function numFormat(num) {
+      if (num <= 0) {
+        return '00'
+      }
+      if (num < 10) {
+        return `0${num}`
+      }
+      return num
+    }
+
+    function count() {
+      const current = dayjs()
+      if (!shouldIWorking(current)) {
+        document.getElementById('date').innerText = '下班了'
+        return;
+      }
+      let payDay = dayjs().date(15).hour(17).endOf('hour')
+      if (payDay.valueOf() < current.valueOf()) {
+        payDay = payDay.add(1, 'month')
+      }
+      const day = payDay.diff(current, 'day')
+      const leftTime = Math.ceil((payDay.subtract(day, 'day').valueOf() - current.valueOf()) / 1000)
+      const hour = Math.floor(leftTime / 3600)
+      const minute = Math.floor((leftTime - (hour * 3600)) / 60)
+      const second = leftTime - (hour * 3600) - (minute * 60)
+
+      document.getElementById('date').innerText = `${day}d ${numFormat(hour)}:${numFormat(minute)}:${numFormat(second)}`
+      window.requestAnimationFrame(count)
+    }
+    count()
+  </script>
+</html>
